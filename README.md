@@ -16,6 +16,16 @@
   <a href="https://github.com/Jampurampavan1903"><img src="https://img.shields.io/badge/GitHub-Jampurampavan1903-181717?style=flat-square&logo=github&logoColor=white"/></a>
 </div>
 
+<div align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FJampurampavan1903%2FPitchmind&root-directory=frontend" target="_blank">
+    <img src="https://vercel.com/button" alt="Deploy with Vercel"/>
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2FJampurampavan1903%2FPitchmind" target="_blank">
+    <img src="https://railway.app/button.svg" alt="Deploy on Railway"/>
+  </a>
+</div>
+
 -----
 
 ## 🧠 About PitchMind
