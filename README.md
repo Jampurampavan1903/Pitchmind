@@ -21,6 +21,10 @@
     <img src="https://vercel.com/button" alt="Deploy with Vercel"/>
   </a>
   &nbsp;&nbsp;
+  <a href="https://render.com/deploy?repo=https://github.com/Jampurampavan1903/Pitchmind" target="_blank">
+    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"/>
+  </a>
+  &nbsp;&nbsp;
   <a href="https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2FJampurampavan1903%2FPitchmind" target="_blank">
     <img src="https://railway.app/button.svg" alt="Deploy on Railway"/>
   </a>

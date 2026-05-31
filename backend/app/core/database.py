@@ -4,6 +4,11 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./pitchmind.db")
 
+# Automatically translate standard synchronous postgresql scheme to asyncpg driver
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+
 # Create high-performance Async database engine
 engine = create_async_engine(
     DATABASE_URL,
