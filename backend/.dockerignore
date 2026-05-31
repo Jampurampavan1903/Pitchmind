@@ -1,0 +1,15 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.git
+.gitignore
+pitchmind.db
+pitchmind.db-journal
+storage/
+uploads/
+videos/
+logs/

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pitchmind-ai"
+version = "0.1.0"
+description = "Pure Python AI and Biomechanics engine for cricket video analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "PitchMind AI Team", email = "ai@pitchmind.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "mediapipe>=0.10.14",
+    "opencv-python>=4.10.0",
+    "numpy>=1.26.0",
+    "google-generativeai>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pitchmind_ai*"]

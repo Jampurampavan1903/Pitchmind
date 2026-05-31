@@ -1,0 +1,54 @@
+# --- SYSTEM / DEVS ---
+.DS_Store
+Thumbs.db
+.vscode/launch.json
+.idea/
+
+# --- FRONTEND (Node / Next.js) ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# --- BACKEND (Python / FastAPI) ---
+backend/.venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.env
+
+# --- AI ENGINE (Python / ML) ---
+ai-engine/.venv/
+ai-engine/__pycache__/
+ai-engine/*.pyc
+ai-engine/*.pyo
+ai-engine/*.pyd
+ai-engine/.pytest_cache/
+ai-engine/*.egg-info/
+ai-engine/build/
+ai-engine/dist/
+
+# --- DATABASE ---
+backend/*.db
+backend/*.db-journal
+backend/*.sqlite3
+pitchmind.db
+
+# --- LOCAL STORAGE (Gitignored Media Assets) ---
+storage/videos/*
+!storage/videos/.gitkeep
+storage/frames/*
+!storage/frames/.gitkeep
+storage/exports/*
+!storage/exports/.gitkeep
