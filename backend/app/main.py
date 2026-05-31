@@ -44,10 +44,14 @@ app = FastAPI(
 )
 
 # CORS Policy configuration
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+origins_env = os.getenv("CORS_ORIGINS")
+if origins_env:
+    origins = [origin.strip() for origin in origins_env.split(",") if origin.strip()]
+else:
+    origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,6 +60,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Mount the local storage directory to serve JPEG frame assets
 # E.g. frames/uuid/frame_0001.jpg loads from /api/v1/assets/frames/uuid/frame_0001.jpg
