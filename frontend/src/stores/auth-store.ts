@@ -83,11 +83,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // 1. Supabase Hybrid Auth Pipeline
     if (isSupabaseConfigured && supabase) {
       try {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: email || undefined,
-          phone: phoneNumber || undefined
-        });
-        if (error) throw error;
+        let result;
+        if (email) {
+          result = await supabase.auth.signInWithOtp({ email });
+        } else if (phoneNumber) {
+          result = await supabase.auth.signInWithOtp({ phone: phoneNumber });
+        } else {
+          throw new Error('Email or Phone number is required for signup');
+        }
+        
+        if (result.error) throw result.error;
         
         set({ 
           verificationId: email || phoneNumber || 'supabase-session', 
@@ -133,12 +138,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (isSupabaseConfigured && supabase) {
       try {
         const isEmail = verificationId.includes('@');
-        const { data, error } = await supabase.auth.verifyOtp({
-          email: isEmail ? verificationId : undefined,
-          phone: !isEmail ? verificationId : undefined,
-          token: otpCode,
-          type: isEmail ? 'signup' : 'sms'
-        });
+        let result;
+        if (isEmail) {
+          result = await supabase.auth.verifyOtp({
+            email: verificationId,
+            token: otpCode,
+            type: 'signup'
+          });
+        } else {
+          result = await supabase.auth.verifyOtp({
+            phone: verificationId,
+            token: otpCode,
+            type: 'sms'
+          });
+        }
+        
+        const { data, error } = result;
         if (error) throw error;
 
         const sessionToken = data.session?.access_token || null;
