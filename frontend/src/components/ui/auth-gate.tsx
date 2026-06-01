@@ -30,8 +30,7 @@ export const AuthGate: React.FC = () => {
   const [countryCode, setCountryCode] = useState('+91');
   
   // OTP digits state
-
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState<string[]>([]);
   const otpRefs = useRef<HTMLInputElement[]>([]);
 
   // Profile data
@@ -52,10 +51,11 @@ export const AuthGate: React.FC = () => {
   // Clear inputs on step change
   useEffect(() => {
     if (step === 'otp') {
-      setOtpDigits(['', '', '', '', '', '']);
+      const length = method === 'email' ? 8 : 6;
+      setOtpDigits(Array(length).fill(''));
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     }
-  }, [step]);
+  }, [step, method]);
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,20 +72,20 @@ export const AuthGate: React.FC = () => {
 
 
   const handleOtpChange = (value: string, index: number) => {
-    if (isNaN(Number(value))) return;
-    
     const newDigits = [...otpDigits];
     newDigits[index] = value;
     setOtpDigits(newDigits);
 
+    const otpLength = method === 'email' ? 8 : 6;
+
     // Focus next input
-    if (value !== '' && index < 5) {
+    if (value !== '' && index < otpLength - 1) {
       otpRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit OTP once 6 digits are loaded
+    // Auto-submit OTP once all digits are loaded
     const fullCode = newDigits.join('');
-    if (fullCode.length === 6) {
+    if (fullCode.length === otpLength) {
       handleOtpSubmit(fullCode);
     }
   };
@@ -373,7 +373,7 @@ export const AuthGate: React.FC = () => {
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f3f4f6' }}>Verification Required</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                Please enter the 6-digit OTP code sent to your account.
+                Please enter the {method === 'email' ? '8-character' : '6-digit'} OTP code sent to your account.
               </p>
             </div>
 
@@ -389,7 +389,7 @@ export const AuthGate: React.FC = () => {
                   onChange={(e) => handleOtpChange(e.target.value, idx)}
                   onKeyDown={(e) => handleOtpKeyDown(e, idx)}
                   style={{
-                    width: '44px',
+                    width: method === 'email' ? '32px' : '44px',
                     height: '48px',
                     background: '#030712',
                     border: '1px solid #111c2e',
