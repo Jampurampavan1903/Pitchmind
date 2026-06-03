@@ -31,14 +31,12 @@ class BiomechanicsCalculator:
         self.wrist_analyzer = WristAnalyzer()
         self.com_analyzer = CentreOfMassAnalyzer()
         self.backlift_analyzer = BackliftAnalyzer()
-        
-        # PitchMind V1.2 Instantiations
         self.timing_analyzer = TimingAnalyzer()
         self.sweet_spot_analyzer = SweetSpotAnalyzer()
         self.tactical_advisor = TacticalAdvisor()
         self.length_judging_analyzer = LengthJudgingAnalyzer()
-        self.shot_classifier = ShotClassifier() # 🆕
-        self.kinetic_chain_analyzer = KineticChainAnalyzer() # 🆕 V0.4
+        self.shot_classifier = ShotClassifier()
+        self.kinetic_chain_analyzer = KineticChainAnalyzer()
 
     def calculate(self, landmarks_sequence: list[FrameLandmarks], is_left_handed: bool = False) -> BattingMetrics:
         """
@@ -74,7 +72,8 @@ class BiomechanicsCalculator:
             footwork_metrics.stride_length_px, 
             footwork_metrics.stride_ratio
         )
-        kinetic_chain_metrics = self.kinetic_chain_analyzer.analyze(landmarks_sequence, is_left_handed) # 🆕 V0.4
+        kinetic_chain_metrics = self.kinetic_chain_analyzer.analyze(landmarks_sequence, is_left_handed)
+
         
         # Footwork timing sync utility score (0-100)
         footwork_sync_score = min(100.0, max(0.0, 100.0 - abs(footwork_metrics.timing_delay_ms - 80.0) * 0.3))
@@ -147,7 +146,7 @@ class BiomechanicsCalculator:
             contact=contact_metrics,
             tactical_alternatives=tactical_alternatives,
             length_judging=length_judging_metrics,
-            kinetic_chain=kinetic_chain_metrics, # 🆕 V0.4
+            kinetic_chain=kinetic_chain_metrics,
             overall_score=float(overall_score),
             stroke_type=stroke_type,
             stroke_name=stroke_name

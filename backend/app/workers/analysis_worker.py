@@ -95,33 +95,12 @@ async def process_video_task(video_id: str, storage: StorageService):
             on_pipeline_progress(95.0, "saving_results")
             
             metrics_dict = dataclasses.asdict(result.metrics)
-            
-            # 🆕 Calculate V0.3 Postural Congruency Index (PCI)
-            try:
-                import sys
-                import os
-                sys.path.insert(0, os.path.abspath("../ai-engine"))
-                from pitchmind_ai.biomechanics.pci_calculator import PCICalculator
-                stroke_type = metrics_dict.get("stroke_type", "cover_drive")
-                metrics_dict["pci_score"] = PCICalculator.calculate_pci(metrics_dict, stroke_type)
-            except Exception as pci_err:
-                print(f"[PCI CALCULATION ERROR] {str(pci_err)}")
-                metrics_dict["pci_score"] = 82.5 # clean fallback
-                
             landmarks_list = [dataclasses.asdict(l) for l in result.landmarks]
             coaching_list = [dataclasses.asdict(c) for c in result.coaching]
             deliveries_list = []
             if result.deliveries:
                 for d in result.deliveries:
                     d_metrics = dataclasses.asdict(d.metrics)
-                    # Calculate PCI for individual delivery slices
-                    try:
-                        from pitchmind_ai.biomechanics.pci_calculator import PCICalculator
-                        d_stroke = d_metrics.get("stroke_type", "cover_drive")
-                        d_metrics["pci_score"] = PCICalculator.calculate_pci(d_metrics, d_stroke)
-                    except Exception:
-                        d_metrics["pci_score"] = metrics_dict["pci_score"]
-                        
                     deliveries_list.append({
                         "delivery_index": d.delivery_index,
                         "frame_range": list(d.frame_range),
@@ -180,7 +159,7 @@ async def process_video_task(video_id: str, storage: StorageService):
             
             # Update database telemetry
             db_video.status = "complete"
-            db_video.duration_seconds = result.metadata.fps * len(result.frames) / 1000.0 # V1 approx
+            db_video.duration_seconds = result.metadata.processing_time_seconds # Use actual processing time
             db_video.fps = result.metadata.fps
             db_video.resolution = result.metadata.resolution
             
