@@ -1,9 +1,13 @@
+import os
 import uuid
 from typing import BinaryIO
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.video import Video
 from app.models.analysis import Analysis
+from app.core.logging import get_logger
 from app.services.storage_service import StorageService
+
+logger = get_logger("pitchmind.upload")
 
 class UploadService:
     """Orchestrates player video uploads, file integrity checks, and SQL database registrations."""
@@ -12,7 +16,13 @@ class UploadService:
         self.db = db
         self.storage = storage_service
 
-    async def handle_upload(self, filename: str, file_data: BinaryIO, file_size_bytes: int) -> Video:
+    async def handle_upload(
+        self,
+        filename: str,
+        file_data: BinaryIO,
+        file_size_bytes: int,
+        user_id: str,
+    ) -> Video:
         """
         Validates, saves, and registers an uploaded video.
         Creates matching Video and Analysis database records in a single transaction.
@@ -25,15 +35,22 @@ class UploadService:
         
         # 3. Write binary file to storage bucket
         saved_path = self.storage.save_video(video_id, filename, file_data)
-        
+        logger.info(
+            "handle_upload saved video_id=%s path=%s size_bytes=%d",
+            video_id,
+            saved_path,
+            os.path.getsize(saved_path),
+        )
+
         # 4. Create database records
         db_video = Video(
             id=video_id,
+            user_id=user_id,
             filename=f"original{filename[filename.rfind('.'):]}",
             original_name=filename,
             file_path=saved_path,
             file_size_bytes=file_size_bytes,
-            status="uploaded"
+            status="uploaded",
         )
         
         db_analysis = Analysis(

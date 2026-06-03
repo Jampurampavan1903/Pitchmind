@@ -1,3 +1,4 @@
+import os
 import cv2
 import json
 import asyncio
@@ -7,13 +8,13 @@ from sqlalchemy import select
 from app.models.video import Video
 from app.models.analysis import Analysis
 from app.core.database import AsyncSessionLocal
+from app.core.logging import get_logger
 from app.services.storage_service import StorageService
+from app.workers.progress_store import PROGRESS_STORE
+
+logger = get_logger("pitchmind.worker")
 from pitchmind_ai.pipeline.batting_pipeline import BattingPipeline
 from pitchmind_ai.pipeline.config import PipelineConfig
-
-# In-memory global progress broker for V1 dashboard status updates
-# Format: { "video_id": { "status": "processing", "progress_pct": 40.0, "current_step": "pose_estimation" } }
-PROGRESS_STORE = {}
 
 def run_analysis_and_save_visuals(video_path: str, video_id: str, storage: StorageService, progress_callback):
     """
@@ -56,9 +57,34 @@ async def process_video_task(video_id: str, storage: StorageService):
         
         if not db_video or not db_analysis:
             return
-            
-        video_file_path = db_video.file_path
-        
+
+        if not db_video.user_id:
+            PROGRESS_STORE[video_id] = {
+                "status": "failed",
+                "progress_pct": 0.0,
+                "current_step": "error",
+                "error_message": "Video has no owner; processing refused",
+            }
+            db_analysis.status = "failed"
+            db_analysis.error_message = "Video has no owner"
+            db_video.status = "failed"
+            await db.commit()
+            return
+
+        video_file_path = storage.resolve_video_read_path(db_video.id, db_video.file_path)
+        if not os.path.isfile(video_file_path) or os.path.getsize(video_file_path) <= 0:
+            raise FileNotFoundError(
+                f"Video not on disk before analysis: path={video_file_path} "
+                f"exists={os.path.isfile(video_file_path)} "
+                f"size={os.path.getsize(video_file_path) if os.path.isfile(video_file_path) else 0}"
+            )
+        logger.info(
+            "process_video_task video_id=%s read_path=%s size_bytes=%d",
+            video_id,
+            video_file_path,
+            os.path.getsize(video_file_path),
+        )
+
         # Update status to processing
         db_video.status = "processing"
         db_analysis.status = "processing"
@@ -96,7 +122,7 @@ async def process_video_task(video_id: str, storage: StorageService):
             
             metrics_dict = dataclasses.asdict(result.metrics)
             landmarks_list = [dataclasses.asdict(l) for l in result.landmarks]
-            coaching_list = [dataclasses.asdict(c) for c in result.coaching]
+            coaching_list = [dataclasses.asdict(c) for c in (result.coaching or [])]
             deliveries_list = []
             if result.deliveries:
                 for d in result.deliveries:
