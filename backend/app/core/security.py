@@ -1,6 +1,7 @@
 import os
 import secrets
 from datetime import datetime, timedelta
+from typing import Optional
 import jwt
 from fastapi import HTTPException, status
 
@@ -43,3 +44,14 @@ def decode_access_token(token: str) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid security token"
         )
+
+
+def decode_token_subject(token: Optional[str]) -> Optional[str]:
+    """Decode JWT for WebSocket/query auth; returns None if invalid."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload.get("sub")
+    except jwt.PyJWTError:
+        return None
