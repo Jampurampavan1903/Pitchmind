@@ -12,7 +12,11 @@ async def get_developer_config():
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     
+    bypass_raw = os.getenv("PITCHMIND_OTP_BYPASS_ENABLED", "False")
+    bypass_enabled = bypass_raw.lower() in ("true", "1", "yes")
+
     return {
         "claude_active": len(anthropic_key) > 0,
-        "openai_active": len(openai_key) > 0
+        "openai_active": len(openai_key) > 0,
+        "otp_bypass_enabled": bypass_enabled,
     }

@@ -36,6 +36,12 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(ensure_videos_user_id_column)
     logger.info("Schema initialized successfully!")
+    bypass_raw = os.getenv("PITCHMIND_OTP_BYPASS_ENABLED", "False")
+    logger.info(
+        "OTP bypass config: PITCHMIND_OTP_BYPASS_ENABLED=%r active=%s",
+        bypass_raw,
+        bypass_raw.lower() in ("true", "1", "yes"),
+    )
     yield
 
 app = FastAPI(
