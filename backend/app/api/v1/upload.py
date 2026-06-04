@@ -39,6 +39,14 @@ async def upload_video(
 
         from app.workers.analysis_worker import process_video_task
 
+        # Seed progress before background worker runs (avoids 404 on immediate poll)
+        PROGRESS_STORE[db_video.id] = {
+            "status": "queued",
+            "progress_pct": 0.0,
+            "current_step": "queued",
+            "message": "Upload received; analysis starting",
+        }
+
         background_tasks.add_task(
             process_video_task,
             video_id=db_video.id,

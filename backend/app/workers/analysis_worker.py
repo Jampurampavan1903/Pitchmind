@@ -61,6 +61,12 @@ async def process_video_task(video_id: str, storage: StorageService):
         db_analysis = analysis_query.scalars().first()
         
         if not db_video or not db_analysis:
+            PROGRESS_STORE[video_id] = {
+                "status": "failed",
+                "progress_pct": 0.0,
+                "current_step": "error",
+                "error_message": "Video or analysis record missing after upload",
+            }
             return
 
         if not db_video.user_id:
@@ -76,32 +82,13 @@ async def process_video_task(video_id: str, storage: StorageService):
             await db.commit()
             return
 
-        video_file_path = storage.resolve_video_read_path(db_video.id, db_video.file_path)
-        if not os.path.isfile(video_file_path) or os.path.getsize(video_file_path) <= 0:
-            raise FileNotFoundError(
-                f"Video not on disk before analysis: path={video_file_path} "
-                f"exists={os.path.isfile(video_file_path)} "
-                f"size={os.path.getsize(video_file_path) if os.path.isfile(video_file_path) else 0}"
-            )
-        logger.info(
-            "process_video_task video_id=%s read_path=%s size_bytes=%d",
-            video_id,
-            video_file_path,
-            os.path.getsize(video_file_path),
-        )
-
-        # Update status to processing
-        db_video.status = "processing"
-        db_analysis.status = "processing"
-        await db.commit()
-        
-        # Initialize in-memory progress tracker
+        # Initialize in-memory progress tracker before disk/ML work
         PROGRESS_STORE[video_id] = {
             "status": "processing",
-            "progress_pct": 10.0,
-            "current_step": "extracting_frames"
+            "progress_pct": 5.0,
+            "current_step": "starting",
         }
-        
+
         def on_pipeline_progress(pct: float, step: str):
             """Pipeline callback to broker in-memory status maps for real-time WebSockets."""
             PROGRESS_STORE[video_id] = {
@@ -109,8 +96,32 @@ async def process_video_task(video_id: str, storage: StorageService):
                 "progress_pct": pct,
                 "current_step": step
             }
-            
+
         try:
+            video_file_path = storage.resolve_video_read_path(db_video.id, db_video.file_path)
+            if not os.path.isfile(video_file_path) or os.path.getsize(video_file_path) <= 0:
+                raise FileNotFoundError(
+                    f"Video not on disk before analysis: path={video_file_path} "
+                    f"exists={os.path.isfile(video_file_path)} "
+                    f"size={os.path.getsize(video_file_path) if os.path.isfile(video_file_path) else 0}"
+                )
+            logger.info(
+                "process_video_task video_id=%s read_path=%s size_bytes=%d",
+                video_id,
+                video_file_path,
+                os.path.getsize(video_file_path),
+            )
+
+            db_video.status = "processing"
+            db_analysis.status = "processing"
+            await db.commit()
+
+            PROGRESS_STORE[video_id] = {
+                "status": "processing",
+                "progress_pct": 10.0,
+                "current_step": "extracting_frames",
+            }
+
             # Run heavy CPU-bound code and frame saving in a separate thread pool executor
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(
