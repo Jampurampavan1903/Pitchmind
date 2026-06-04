@@ -17,7 +17,9 @@ services:
       - key: ALGORITHM
         value: HS256
       - key: PITCHMIND_OTP_BYPASS_ENABLED
-        value: "False"
+        value: "True"
+      - key: CORS_ORIGINS
+        value: https://pitchmind-one.vercel.app
       - key: LOG_LEVEL
         value: INFO
       - key: PITCHMIND_STORAGE_DIR
