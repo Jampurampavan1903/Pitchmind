@@ -18,8 +18,9 @@ class OpenAIService:
         If OPENAI_API_KEY is not configured, generates a silent placeholder file.
         """
         api_key = os.getenv("OPENAI_API_KEY")
-        audio_dir = os.path.abspath("../storage/audio")
-        os.makedirs(audio_dir, exist_ok=True)
+        from app.core.storage_paths import resolve_storage_subdir
+
+        audio_dir = resolve_storage_subdir("audio")
         target_path = os.path.join(audio_dir, f"{analysis_id}.webm")
         
         if not api_key:

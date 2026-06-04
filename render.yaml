@@ -20,6 +20,8 @@ services:
         value: "False"
       - key: LOG_LEVEL
         value: INFO
+      - key: PITCHMIND_STORAGE_DIR
+        value: ../storage
 
 databases:
   # Managed PostgreSQL Database

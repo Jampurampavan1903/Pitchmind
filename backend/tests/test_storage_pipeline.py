@@ -18,7 +18,7 @@ def test_resolve_storage_base_dir_uses_env(monkeypatch):
 def test_save_video_writes_non_empty_file():
     with tempfile.TemporaryDirectory() as tmp:
         storage = StorageService(base_dir=tmp)
-        payload = b"\x00\x00\x00\x18ftypmp41\x00" + b"\x00" * 512
+        payload = b"\x00\x00\x00\x18ftypmp41\x00" + b"\x00" * 12_000
         path = storage.save_video(
             "vid-test",
             "clip.mp4",
@@ -31,10 +31,28 @@ def test_save_video_writes_non_empty_file():
         assert os.path.getsize(resolved) > 0
 
 
+def test_resolve_storage_subdir_under_base(monkeypatch):
+    with tempfile.TemporaryDirectory() as tmp:
+        monkeypatch.setenv("PITCHMIND_STORAGE_DIR", tmp)
+        from app.core.storage_paths import resolve_storage_subdir
+
+        audio = resolve_storage_subdir("audio")
+        assert audio == os.path.join(tmp, "audio")
+        assert os.path.isdir(audio)
+
+
+def test_save_video_rejects_tiny_payload():
+    with tempfile.TemporaryDirectory() as tmp:
+        storage = StorageService(base_dir=tmp)
+        tiny = b"\x00" * 100
+        with pytest.raises(OSError, match="too small"):
+            storage.save_video("tiny-vid", "x.mp4", io.BytesIO(tiny))
+
+
 def test_resolve_video_read_path_falls_back_to_canonical_dir():
     with tempfile.TemporaryDirectory() as tmp:
         storage = StorageService(base_dir=tmp)
-        payload = b"\x00\x00\x00\x1cftypisom\x00\x00" + b"\x01" * 256
+        payload = b"\x00\x00\x00\x1cftypisom\x00\x00" + b"\x01" * 12_000
         path = storage.save_video("vid-b", "x.mp4", io.BytesIO(payload))
         wrong_stored = "/tmp/does-not-exist/original.mp4"
         resolved = storage.resolve_video_read_path("vid-b", wrong_stored)

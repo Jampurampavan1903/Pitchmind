@@ -5,6 +5,13 @@ import os
 from pathlib import Path
 
 
+def resolve_storage_subdir(name: str) -> str:
+    """Canonical subdirectory under storage root (e.g. audio, videos)."""
+    path = os.path.join(resolve_storage_base_dir(), name)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def resolve_storage_base_dir() -> str:
     """
     Prefer PITCHMIND_STORAGE_DIR; else repo-root storage/ adjacent to backend/.

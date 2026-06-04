@@ -161,8 +161,9 @@ async def delete_analysis(analysis_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/analysis/{analysis_id}/audio")
 async def upload_audio(analysis_id: str, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
     """Uploads a WebM/audio coaching voice-over, saving it to disk and updating the DB coaching flag."""
-    audio_dir = os.path.abspath("../storage/audio")
-    os.makedirs(audio_dir, exist_ok=True)
+    from app.core.storage_paths import resolve_storage_subdir
+
+    audio_dir = resolve_storage_subdir("audio")
     
     target_path = os.path.join(audio_dir, f"{analysis_id}.webm")
     

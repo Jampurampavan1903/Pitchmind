@@ -78,9 +78,15 @@ class StorageService:
             exists,
             written,
         )
+        min_bytes = 10_000
         if not exists or written <= 0:
             raise OSError(
                 f"Video write failed: path={target_path} exists={exists} size_bytes={written}"
+            )
+        if written < min_bytes:
+            raise OSError(
+                f"Video write too small: path={target_path} size_bytes={written} "
+                f"minimum={min_bytes}"
             )
 
         if self.is_cloud:

@@ -47,6 +47,11 @@ async def process_video_task(video_id: str, storage: StorageService):
     Executes the heavy computer vision and biomechanical analysis pipeline asynchronously.
     Acts as the single bridge separating web layers and ML computation.
     """
+    logger.info(
+        "process_video_task started video_id=%s storage_base_dir=%s",
+        video_id,
+        storage.base_dir,
+    )
     # Fetch database session inside worker context to ensure independent lifecycle
     async with AsyncSessionLocal() as db:
         video_query = await db.execute(select(Video).where(Video.id == video_id))
