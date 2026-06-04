@@ -109,12 +109,29 @@ async def verify_otp(payload: VerifyOtpRequest, db: AsyncSession = Depends(get_d
         raise HTTPException(status_code=404, detail="Verification session not found")
         
     # Check for bypass or actual verification match
-    bypass_enabled = os.getenv("PITCHMIND_OTP_BYPASS_ENABLED", "False").lower() in ("true", "1", "yes")
-    is_bypass = bypass_enabled and payload.otp_code == "123456"
-    
-    is_valid_otp = is_bypass or (user.otp_code == payload.otp_code and user.otp_expires_at and datetime.utcnow() < user.otp_expires_at)
-    
+    bypass_raw = (os.getenv("PITCHMIND_OTP_BYPASS_ENABLED", "False") or "False").strip()
+    bypass_enabled = bypass_raw.lower() in ("true", "1", "yes")
+    otp_supplied = (payload.otp_code or "").strip()
+    is_bypass = bypass_enabled and otp_supplied == "123456"
+
+    is_valid_otp = is_bypass or (
+        user.otp_code == otp_supplied
+        and user.otp_expires_at
+        and datetime.utcnow() < user.otp_expires_at
+    )
+
     if not is_valid_otp:
+        logger.warning(
+            "verify_otp rejected verification_id=%s bypass_enabled=%s bypass_raw=%r "
+            "otp_supplied=%r is_bypass=%s db_otp_set=%s db_expired=%s",
+            payload.verification_id,
+            bypass_enabled,
+            bypass_raw,
+            otp_supplied,
+            is_bypass,
+            bool(user.otp_code),
+            not user.otp_expires_at or datetime.utcnow() >= user.otp_expires_at,
+        )
         raise HTTPException(status_code=400, detail="Invalid or expired OTP code")
         
     # Successfully verified: mark user as active/verified

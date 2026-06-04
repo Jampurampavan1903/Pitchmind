@@ -24,12 +24,7 @@ DEFAULT_VIDEO = REPO / "storage" / "videos" / "test-e2e" / "original.mp4"
 
 API = os.environ.get("STAGING_API_URL", "").rstrip("/")
 VIDEO = Path(os.environ.get("STAGING_VIDEO_PATH", str(DEFAULT_VIDEO)))
-BYPASS = os.environ.get("PITCHMIND_OTP_BYPASS_ENABLED", "True").lower() in (
-    "true",
-    "1",
-    "yes",
-)
-OTP = "123456" if BYPASS else os.environ.get("STAGING_OTP_CODE", "")
+OTP = os.environ.get("STAGING_OTP_CODE", "")
 MAX_WAIT = int(os.environ.get("STAGING_POLL_SECONDS", "600"))
 POLL_INTERVAL = 3
 
@@ -81,6 +76,22 @@ async def main() -> int:
             set_status("Backend", "FAIL", str(e))
             return _summary(1)
 
+        otp_for_verify = OTP
+        try:
+            cfg = await client.get("/api/v1/developer/config")
+            if cfg.status_code == 200 and cfg.json().get("otp_bypass_enabled"):
+                otp_for_verify = "123456"
+                print(f"  server otp_bypass_enabled=True → using OTP 123456")
+        except Exception:
+            pass
+        if not otp_for_verify:
+            shell_bypass = os.environ.get("PITCHMIND_OTP_BYPASS_ENABLED", "True").lower() in (
+                "true",
+                "1",
+                "yes",
+            )
+            otp_for_verify = "123456" if shell_bypass else ""
+
         # Auth
         email = f"deploy-{uuid.uuid4().hex[:8]}@staging.pitchmind.test"
         try:
@@ -89,7 +100,7 @@ async def main() -> int:
                 set_status("Authentication", "FAIL", f"signup {r.status_code}: {r.text[:200]}")
                 return _summary(1)
             vid = r.json()["verification_id"]
-            if not BYPASS and not OTP:
+            if not otp_for_verify:
                 set_status("Authentication", "FAIL", "Set OTP bypass on Render or STAGING_OTP_CODE")
                 return _summary(1)
             r = await client.post(

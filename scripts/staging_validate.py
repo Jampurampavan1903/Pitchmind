@@ -20,12 +20,8 @@ except ImportError:
     sys.exit(1)
 
 API = os.environ.get("STAGING_API_URL", "http://127.0.0.1:8000").rstrip("/")
-BYPASS = os.environ.get("PITCHMIND_OTP_BYPASS_ENABLED", "True").lower() in (
-    "true",
-    "1",
-    "yes",
-)
-OTP = "123456" if BYPASS else os.environ.get("STAGING_OTP_CODE", "")
+# OTP selection is driven by SERVER bypass flag (see main()), not shell env alone.
+OTP = os.environ.get("STAGING_OTP_CODE", "")
 
 results: list[tuple[str, bool, str]] = []
 
@@ -42,6 +38,7 @@ def main() -> int:
     client = httpx.Client(timeout=timeout, trust_env=False)
 
     # Health
+    server_bypass = False
     try:
         r = client.get(f"{API}/api/v1/health")
         record("health", r.status_code == 200, f"status={r.status_code}")
@@ -51,6 +48,25 @@ def main() -> int:
         record("health", False, str(e))
         print("\nCannot reach API — check STAGING_API_URL, Render deploy, CORS not needed for this script.")
         return 1
+
+    try:
+        cfg = client.get(f"{API}/api/v1/developer/config")
+        if cfg.status_code == 200:
+            server_bypass = bool(cfg.json().get("otp_bypass_enabled"))
+            print(f"  server otp_bypass_enabled={server_bypass}")
+    except Exception:
+        pass
+
+    global OTP
+    if server_bypass:
+        OTP = "123456"
+    elif not OTP:
+        shell_bypass = os.environ.get("PITCHMIND_OTP_BYPASS_ENABLED", "True").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
+        OTP = "123456" if shell_bypass else ""
 
     # CORS header probe (optional)
     try:
@@ -79,8 +95,12 @@ def main() -> int:
         record("auth_signup", False, str(e))
         return _finish()
 
-    if not BYPASS and not OTP:
-        record("auth_verify_otp", False, "Set STAGING_OTP_CODE or enable bypass on API")
+    if not OTP:
+        record(
+            "auth_verify_otp",
+            False,
+            "Set STAGING_OTP_CODE or enable PITCHMIND_OTP_BYPASS_ENABLED on API",
+        )
         return _finish()
 
     try:
