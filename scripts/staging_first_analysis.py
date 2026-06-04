@@ -67,7 +67,9 @@ async def main() -> int:
     print(f"\n=== Staging first analysis ===\nAPI: {API}\nVideo: {VIDEO}\n")
     timeout = httpx.Timeout(120.0, connect=30.0)
 
-    async with httpx.AsyncClient(base_url=API, timeout=timeout) as client:
+    async with httpx.AsyncClient(
+        base_url=API, timeout=timeout, trust_env=False
+    ) as client:
         # Health
         try:
             r = await client.get("/api/v1/health")
