@@ -35,6 +35,7 @@ ai-engine/*.pyc
 ai-engine/*.pyo
 ai-engine/*.pyd
 ai-engine/.pytest_cache/
+ai-engine/pitchmind_ai/pose/.cache/
 ai-engine/*.egg-info/
 ai-engine/build/
 ai-engine/dist/
